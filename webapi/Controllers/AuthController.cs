@@ -1,0 +1,63 @@
+using Microsoft.AspNetCore.Mvc;
+using webapi.Services;
+
+namespace webapi.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class AuthController(AuthService authService) : Controller
+{
+    [HttpGet("refresh")]
+    public async Task<IActionResult> Refresh()
+    {
+        var token = Request.Cookies["refresh-token"];
+        if (token == null)
+            return Unauthorized();
+
+        try
+        {
+            var (accessToken, refreshToken, expires) =
+                await authService.Refresh(token); 
+            return GetAuthenticatedResponse(accessToken, refreshToken, expires);
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized();
+        }
+        
+           
+    }
+
+    [HttpPost("google")]
+    public async Task<IActionResult> AuthWithGoogle([FromBody]string idToken)
+    {
+        try
+        {
+           (string accessToken, string refreshToken, DateTime expires) = 
+               await authService.AuthWithGoogle(idToken);
+           
+            return GetAuthenticatedResponse(accessToken, refreshToken, expires);
+           
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex);
+        }
+    }
+
+    private IActionResult GetAuthenticatedResponse(string accessToken, string refreshToken, DateTime expires)
+    {
+        Response.Cookies.Append(
+            "refresh-token", 
+            refreshToken,
+            new CookieOptions
+            {
+                Expires = expires,
+                HttpOnly = true,
+                Path = "/api/auth/refresh"
+            }
+        );
+        return Ok(new {accessToken});
+    }
+    
+}

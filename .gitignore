@@ -1,0 +1,42 @@
+## .NET ##
+bin/
+obj/
+*.nupkg
+packages/
+
+## Visual Studio ##
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Rider ##
+.idea/
+*.sln.iml
+
+## VS Code ##
+.vscode/
+
+## Environments ##
+.env
+*.env.local
+*.env.production
+
+## User-specific configs ##
+appsettings.Development.local.json
+appsettings.Production.local.json
+
+## Databases ##
+*.db
+*.mdf
+*.ldf
+
+## Logs ##
+logs/
+*.log
+*.log.*
+
+## Build results ##
+build/
+publish/
