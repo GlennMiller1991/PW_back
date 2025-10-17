@@ -41,6 +41,7 @@ public class SessionRepository(AppDbContext context)
     public void Delete(Session session)
     {
         context.Sessions.Remove(session);
+        context.SaveChanges();
     }
     
     

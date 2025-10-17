@@ -15,10 +15,10 @@ public class JwtService
 
     public JwtService(IConfiguration configuration)
     {
-        Audience = configuration["Audience"]!;
+        Audience = configuration["Jwt:Audience"]!;
         Key = new SymmetricSecurityKey(GetRandomByteArray());
         
-        _accessTokenLifetimeInMinutes = int.TryParse(configuration["AccessTokenLifetimeInMinutes"]!, out var lifetime) ? lifetime : 15;
+        _accessTokenLifetimeInMinutes = int.TryParse(configuration["Jwt:AccessTokenLifetimeInMinutes"]!, out var lifetime) ? lifetime : 15;
         _credentials = new SigningCredentials(Key, SecurityAlgorithms.HmacSha256);
     }
 

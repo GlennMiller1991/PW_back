@@ -12,8 +12,6 @@ builder.Services
 
 builder.Services.AddControllers();
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -28,7 +26,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             {
                 using var scope = app.Services.CreateScope();
                 var jwtConfig = scope.ServiceProvider.GetRequiredService<JwtService>();
-                return audience.ElementAt(0).Contains(jwtConfig.Audience);
+                return audience.Contains(jwtConfig.Audience);
             },
             
             ValidateLifetime = true,
@@ -61,6 +59,9 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IAuthorizationHandler, SessionVersionHandler>();
 
 app = builder.Build();
+
+app.UseWebSockets();
+app.UseMiddleware<DebugMiddleware>();
 
 using (var scope = app.Services.CreateScope())
 {

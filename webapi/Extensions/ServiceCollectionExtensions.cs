@@ -28,9 +28,11 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddBusinessLogic(this IServiceCollection services)
     {
         
-        services.AddScoped<AuthService, AuthService>();
         services.AddSingleton<JwtService, JwtService>();
         services.AddSingleton<PixelService, PixelService>();
+        services.AddSingleton<WsConnectionManager, WsConnectionManager>();
+        services.AddScoped<AuthService, AuthService>();
+        services.AddScoped<Broadcast, Broadcast>();
 
         return services;
     }

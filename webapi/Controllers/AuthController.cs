@@ -7,6 +7,13 @@ namespace webapi.Controllers;
 [Route("api/[controller]")]
 public class AuthController(AuthService authService) : Controller
 {
+    [HttpGet("accessibility")]
+    public IActionResult IsServerAccessible()
+    {
+        return Ok();
+    }
+       
+    
     [HttpGet("refresh")]
     public async Task<IActionResult> Refresh()
     {
@@ -17,27 +24,24 @@ public class AuthController(AuthService authService) : Controller
         try
         {
             var (accessToken, refreshToken, expires) =
-                await authService.Refresh(token); 
+                await authService.Refresh(token);
             return GetAuthenticatedResponse(accessToken, refreshToken, expires);
         }
         catch (Exception ex)
         {
             return Unauthorized();
         }
-        
-           
     }
 
     [HttpPost("google")]
-    public async Task<IActionResult> AuthWithGoogle([FromBody]string idToken)
+    public async Task<IActionResult> AuthWithGoogle([FromBody] string idToken)
     {
         try
         {
-           (string accessToken, string refreshToken, DateTime expires) = 
-               await authService.AuthWithGoogle(idToken);
-           
+            (string accessToken, string refreshToken, DateTime expires) =
+                await authService.AuthWithGoogle(idToken);
+
             return GetAuthenticatedResponse(accessToken, refreshToken, expires);
-           
         }
         catch (Exception ex)
         {
@@ -48,16 +52,26 @@ public class AuthController(AuthService authService) : Controller
     private IActionResult GetAuthenticatedResponse(string accessToken, string refreshToken, DateTime expires)
     {
         Response.Cookies.Append(
-            "refresh-token", 
+            "refresh-token",
             refreshToken,
             new CookieOptions
             {
                 Expires = expires,
                 HttpOnly = true,
-                Path = "/api/auth/refresh"
+                Path = "/api/auth/refresh",
             }
         );
-        return Ok(new {accessToken});
+
+        Response.Cookies.Append(
+            "ws-token",
+            refreshToken,
+            new CookieOptions
+            {
+                Expires = expires,
+                HttpOnly = true,
+                Path = "/api/ws/upgrade"
+            }
+        );
+        return Ok(new { accessToken });
     }
-    
 }

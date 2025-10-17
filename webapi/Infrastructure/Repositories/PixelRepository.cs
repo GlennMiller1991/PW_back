@@ -4,8 +4,8 @@ namespace webapi.Infrastructure.Repositories;
 
 public class PixelRepository
 {
-    private int _width = 10;
-    private int _height = 10;
+    private readonly int _width = 100;
+    private readonly int _height = 100;
     private byte[] _bitmap;
 
     public PixelRepository()
@@ -21,8 +21,7 @@ public class PixelRepository
 
     private void ClearBitmap()
     {
-        for (var i = 0; i < _bitmap.Length; i++)
-            _bitmap[i] = 0x0;
+        Array.Clear(_bitmap);
     }
 
     public void SetPixel(int x, int y, Color color)
@@ -32,4 +31,8 @@ public class PixelRepository
         _bitmap[r + 1] = color.G;
         _bitmap[r + 2] = color.B;
     }
+
+    public (int, int) GetSizes() => (_width, _height);
+
+    public byte[] GetBitmap() => _bitmap;
 }

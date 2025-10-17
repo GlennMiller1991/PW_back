@@ -1,10 +1,8 @@
 using Google.Apis.Auth;
 using webapi.Infrastructure.Repositories;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
+using webapi.Infrastructure.Data.Entities;
 
 namespace webapi.Services;
 
@@ -17,21 +15,30 @@ public class AuthService(
 
     public async Task<(string, string, DateTime)> Refresh(string refreshToken)
     {
+        var session = await ValidateRefreshToken(refreshToken);
+        sessionRepository.Delete(session);
+        return await Auth(session.UserId, ++session.Version);
+    }
+
+    public async Task<Session> ValidateRefreshToken(string refreshToken)
+    {
         using var sha256 = SHA256.Create();
         var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(refreshToken));
         var refreshTokenHash = Convert.ToBase64String(hashBytes);
         var session = await sessionRepository.GetByTokenHash(refreshTokenHash);
         if (session == null) throw new Exception("Session not found");
-        sessionRepository.Delete(session);
-        return await Auth(session.UserId, ++session.Version);
+        return session;
     }
+    
     public async Task<(string, string, DateTime)> AuthWithGoogle(string idToken)
     { 
         GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature.ValidateAsync(idToken);
+        if (!payload.EmailVerified) throw new Exception();
         
         var user = await userRepository.GetOrCreateByGoogleIdAsync(payload.Subject);
         var session = await sessionRepository.GetByUserIdAsync(user.Id);
         if (session != null) sessionRepository.Delete(user.Id);
+        
 
         var sessionVersion = session?.Version ?? 0;
         sessionVersion++;
