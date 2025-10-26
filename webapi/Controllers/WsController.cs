@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using webapi.Extensions;
 using webapi.Services;
@@ -8,7 +7,7 @@ namespace webapi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class WsController(AuthService authService, WsConnectionManager manager) : Controller
+public class WsController(AuthService authService, WsConnectionManager manager, Broadcast broadcast) : Controller
 {
     [HttpGet("upgrade")]
     public async Task<IActionResult> OpenWsConnection()
@@ -30,12 +29,15 @@ public class WsController(AuthService authService, WsConnectionManager manager) 
 
         if (HttpContext.WebSockets.IsWebSocketRequest)
         {
-            using var websocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
             var userId = User.GetUserId();
-
             await manager.RemoveSocket(userId);
-            await manager.AddSocket(websocket, userId);
+            
+            using var websocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+            var completion = manager.AddSocket(websocket, userId);
 
+            broadcast.BroadcastRoom();
+            
+            await completion;
             return Ok();
         }
 
