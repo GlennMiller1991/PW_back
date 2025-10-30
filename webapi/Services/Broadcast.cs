@@ -1,5 +1,6 @@
+using System.Drawing;
 using System.Net.WebSockets;
-using System.Text;
+using webapi.Utilities;
 
 namespace webapi.Services;
 
@@ -16,42 +17,59 @@ internal enum GameMessageType : byte
 
 public class Broadcast(WsConnectionManager connectionManager)
 {
-    public async Task BroadcastRoom()
+    public Task SendMessage(byte[] msg, int? userId = null)
     {
         var tasks = new List<Task>();
-        var byteArray = new []{(byte)Room.Game, (byte)GameMessageType.StatusChange};
         var abort = CancellationToken.None;
-        foreach (var socket in connectionManager.GetAllAliveSockets())
+        if (userId == null)
+            foreach (var socket in connectionManager.GetAllAliveSockets())
+                tasks.Add(socket.SendAsync(msg, WebSocketMessageType.Binary, true, abort));
+        else
         {
-            tasks.Add(
-                socket.SendAsync(byteArray, WebSocketMessageType.Binary, true, abort)
-            );
+            var connection = connectionManager.GetByUserId((int)userId!);
+            if (connection != null)
+                tasks.Add(connection.SendAsync(msg, WebSocketMessageType.Binary, true, abort));
         }
 
-        await Task.WhenAll(tasks);
+        return Task.WhenAll(tasks);
     }
-    public async Task BroadcastPixel(int x, int y, int r, int g, int b)
-    {        var tasks = new List<Task>();        var intArray = new []{x, y, r, g, b};
+    
+    public Task SendStatusChangeMessage(int userId)
+    {
+        var byteArray = new[]{(byte)Room.Game, (byte)GameMessageType.StatusChange};
+        return SendMessage(byteArray, userId);
+    }
+    public Task SendPixelSettingMessage(int x, int y, int r, int g, int b)
+    {        
+        var intArray = new []{x, y, r, g, b};
         var byteArray = new byte[intArray.Length * sizeof(int) + 2];
         byteArray[0] = (byte)Room.Game;
         byteArray[1] = (byte)GameMessageType.PixelSetting;
         Buffer.BlockCopy(intArray, 0, byteArray, 2 ,byteArray.Length - 2);
-        
-        var abort = CancellationToken.None;
-        foreach (var socket in connectionManager.GetAllAliveSockets())
-        {
-            tasks.Add(
-                socket.SendAsync(byteArray, WebSocketMessageType.Binary, true, abort)
-                );
-        }
 
-        await Task.WhenAll(tasks);
+        return SendMessage(byteArray);
     }
 
-    private ArraySegment<byte> MessageToBytes(string message)
+    public Task SendPixelSettingListMessage((int x, int y, Color color)[] arr)
     {
-        var bytes = Encoding.UTF8.GetBytes(message);
-        return new ArraySegment<byte>(bytes);
+        var intArray = new int[arr.Length * 5];
+        var i = 0;
+        foreach (var (x, y, color) in arr)
+        {
+            intArray[i] = x;
+            intArray[i + 1] = y;
+            intArray[i + 2] = color.R;
+            intArray[i + 3] = color.G;
+            intArray[i + 4] = color.B;
+            i += 5;
+        }
+
+        var byteArray = new byte[intArray.Length * sizeof(int) + 2];
+        byteArray[0] = (byte)Room.Game;
+        byteArray[1] = (byte)GameMessageType.PixelSetting;
+        Buffer.BlockCopy(intArray, 0, byteArray, 2, byteArray.Length - 2);
+
+        return SendMessage(byteArray);
     }
     
 }

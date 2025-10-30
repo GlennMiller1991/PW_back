@@ -7,7 +7,7 @@ public class AsyncQueue
     private volatile bool _isWaitingForLock;
     private readonly  Lock _addWork = new ();
     
-    private readonly Queue<Action> _taskQueue = new();
+    private readonly Queue<(Action action, Task completion)> _taskQueue = new();
     private readonly AutoResetEvent _signal = new(false);
     public Thread Thread { get; }
 
@@ -37,15 +37,20 @@ public class AsyncQueue
         }
     }
 
-    public void AddWork(Action action)
+    public Task AddWork(Action action)
     {
+        var completion = new Task(() => { });
         lock (_addWork)
         {
             lock (_taskQueue)
-                _taskQueue.Enqueue(action);
+            {
+                _taskQueue.Enqueue((action, completion));
+            }
 
             Awake();
         }
+
+        return completion;
     }
 
 
@@ -69,10 +74,15 @@ public class AsyncQueue
         {
             if (IsThereWork)
             {
-                Action task;
-                lock (_taskQueue) task = _taskQueue.Dequeue();
+                Action action;
+                Task completion;
+                lock (_taskQueue)
+                {
+                    (action, completion) = _taskQueue.Dequeue();
+                }
 
-                task();
+                action();
+                completion.Start();
             }
             else
             {

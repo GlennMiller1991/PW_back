@@ -35,7 +35,7 @@ public class WsController(AuthService authService, WsConnectionManager manager, 
             using var websocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
             var completion = manager.AddSocket(websocket, userId);
 
-            broadcast.BroadcastRoom();
+            await broadcast.SendStatusChangeMessage(userId);
             
             await completion;
             return Ok();

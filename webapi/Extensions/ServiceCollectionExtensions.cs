@@ -3,6 +3,7 @@ using webapi.Infrastructure.Data;
 using webapi.Infrastructure.Repositories;
 using webapi.Services;
 using webapi.Services.PixelService;
+using webapi.Utilities;
 
 namespace webapi.Extensions;
 
@@ -27,12 +28,11 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddBusinessLogic(this IServiceCollection services)
     {
-        
+        services.AddSingleton<Broadcast, Broadcast>();
         services.AddSingleton<JwtService, JwtService>();
         services.AddSingleton<PixelService, PixelService>();
         services.AddSingleton<WsConnectionManager, WsConnectionManager>();
         services.AddScoped<AuthService, AuthService>();
-        services.AddScoped<Broadcast, Broadcast>();
 
         return services;
     }
