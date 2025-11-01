@@ -37,7 +37,7 @@ public class PixelRepository
         });
     }
 
-    public void SetPixel(SetPixelTask pixelInfo)
+    public void SetPixel(PaintingTask pixelInfo)
     {
         var r = pixelInfo.Y * _width * 3 + pixelInfo.X * 3;
         var color = pixelInfo.Color;

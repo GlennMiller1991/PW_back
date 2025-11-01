@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using webapi.Extensions;
 using webapi.Services;
+using webapi.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 WebApplication? app = null;
@@ -55,8 +56,12 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("ValidSession", policy =>
         policy.Requirements.Add(new SessionVersionRequirements()));
+    
+    options.AddPolicy("ValidPlayer", policy => 
+        policy.Requirements.Add(new PlayerActivityRequirements()));
 });
-builder.Services.AddScoped<IAuthorizationHandler, SessionVersionHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, SessionVersionHandler<SessionVersionRequirements>>();
+builder.Services.AddScoped<IAuthorizationHandler, PlayerActivityHandler<PlayerActivityRequirements>>();
 
 app = builder.Build();
 

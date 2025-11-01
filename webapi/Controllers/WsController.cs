@@ -1,46 +1,28 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using webapi.Extensions;
 using webapi.Services;
+using webapi.Services.GameService;
 
 namespace webapi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class WsController(AuthService authService, WsConnectionManager manager, Broadcast broadcast) : Controller
+public class WsController(AuthService authService, GameService gameService) : Controller
 {
     [HttpGet("upgrade")]
     public async Task<IActionResult> OpenWsConnection()
     {
+        if (!HttpContext.WebSockets.IsWebSocketRequest)
+            return BadRequest();
+
         var token = Request.Cookies["ws-token"];
         if (token == null)
             return Unauthorized();
 
         var session = await authService.ValidateRefreshToken(token);
-        HttpContext.User = new ClaimsPrincipal(
-            new ClaimsIdentity(
-                [
-                    new Claim(ClaimTypes.NameIdentifier, session.UserId.ToString()),
-                    new Claim("session_version", session.Version.ToString())
-                ],
-                "WebSocket"
-            )
-        );
-
-        if (HttpContext.WebSockets.IsWebSocketRequest)
-        {
-            var userId = User.GetUserId();
-            await manager.RemoveSocket(userId);
-            
-            using var websocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-            var completion = manager.AddSocket(websocket, userId);
-
-            await broadcast.SendStatusChangeMessage(userId);
-            
-            await completion;
-            return Ok();
-        }
-
-        return BadRequest();
+        using var websocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+        var player = gameService.AddPlayer(websocket, session.UserId);
+        
+        await player.Completion;
+        return Ok();
     }
 }

@@ -1,3 +1,3 @@
-namespace webapi.Services.PixelService;
+namespace webapi.Services.GameService;
 
 public class GameException : Exception;

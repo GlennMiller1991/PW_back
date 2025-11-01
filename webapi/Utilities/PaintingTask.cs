@@ -2,7 +2,7 @@ using System.Drawing;
 
 namespace webapi.Utilities;
 
-public class SetPixelTask(int x, int y, Color color)
+public class PaintingTask(int x, int y, Color color)
 {
     public TaskCompletionSource Tcs { get; } = new();
 

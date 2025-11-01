@@ -1,32 +1,36 @@
 using System.Drawing;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using webapi.Controllers.Models;
-using webapi.Services.PixelService;
+using webapi.Services;
+using webapi.Services.GameService;
 
 namespace webapi.Controllers;
 
 [ApiController]
 [Route("/api/[controller]")]
-public class GameController(PixelService pixelService) : Controller
+public class GameController(GameService gameService) : Controller
 {
     [HttpGet("sizes")]
     public IActionResult GetSizes()
     {
-        var (width, height) = pixelService.GetSizes();
+        var (width, height) = gameService.GetSizes();
         return Ok(new {width, height});
     }
     
+    [Authorize(Policy = "ValidPlayer")]
     [HttpPost("set")]
     public async Task<IActionResult> SetPixel([FromBody] SetPixelModel payload)
     {
         var color = Color.FromArgb(payload.Color);
-        await pixelService.SetPixel(payload.Point[0], payload.Point[1], color);
+        var player = HttpContext.Items["Player"] as Player;
+        await gameService.SetPixel(player!, payload.Point[0], payload.Point[1], color);
         return Ok();
     }
 
     [HttpGet("bitmap")]
     public IActionResult GetBitmap()
     {
-        return File(pixelService.GetBitmap(), "application/octet-stream");
+        return File(gameService.GetBitmap(), "application/octet-stream");
     }
 }
