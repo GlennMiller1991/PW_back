@@ -1,5 +1,3 @@
-using System.Net;
-
 namespace webapi.Services;
 
 public class DebugMiddleware

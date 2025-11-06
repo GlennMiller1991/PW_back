@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using webapi.Infrastructure.Data;
 using webapi.Infrastructure.Repositories;
 using webapi.Services;
+using webapi.Services.AuthService;
 using webapi.Services.GameService;
 
 namespace webapi.Extensions;

@@ -1,7 +1,7 @@
 using System.Drawing;
 using System.Net.WebSockets;
 
-namespace webapi.Services;
+namespace webapi.Services.GameService;
 
 internal enum Room : byte
 {
@@ -16,18 +16,19 @@ internal enum GameMessageType : byte
 
 public abstract class Broadcast
 {
-    public static Task SendPixelSettingListMessage((int x, int y, Color color)[] arr, WebSocket[] connections)
+    public static Task<List<WebSocket>> SendPixelSettingListMessage((int x, int y, Color color, int version)[] arr, IEnumerable<WebSocket> connections)
     {
-        var intArray = new int[arr.Length * 5];
+        var intArray = new int[arr.Length * 6];
         var i = 0;
-        foreach (var (x, y, color) in arr)
+        foreach (var (x, y, color, version) in arr)
         {
-            intArray[i] = x;
-            intArray[i + 1] = y;
-            intArray[i + 2] = color.R;
-            intArray[i + 3] = color.G;
-            intArray[i + 4] = color.B;
-            i += 5;
+            intArray[i] = version;
+            intArray[i + 1] = x;
+            intArray[i + 2] = y;
+            intArray[i + 3] = color.R;
+            intArray[i + 4] = color.G;
+            intArray[i + 5] = color.B;
+            i += 6;
         }
 
         var byteArray = new byte[intArray.Length * sizeof(int) + 2];
@@ -44,13 +45,24 @@ public abstract class Broadcast
         return SendMessage(byteArray, [socket]);
     }
 
-    public static Task SendMessage(byte[] msg, WebSocket[] connections)
+    public static async Task<List<WebSocket>> SendMessage(byte[] msg, IEnumerable<WebSocket> connections)
     {
         var tasks = new List<Task>();
         var abort = CancellationToken.None;
+        var failed = new List<WebSocket>();
         foreach (var connection in connections)
-            tasks.Add(connection.SendAsync(msg, WebSocketMessageType.Binary, true, abort));
+        {
+            var localConnection = connection;
+            tasks.Add(
+                localConnection.SendAsync(msg, WebSocketMessageType.Binary, true, abort)
+                    .ContinueWith((task) =>
+                    {
+                        if (task.IsFaulted) failed.Add(localConnection);
+                    })
+            );
+        }
 
-        return Task.WhenAll(tasks);
+        await Task.WhenAll(tasks);
+        return failed;
     }
 }

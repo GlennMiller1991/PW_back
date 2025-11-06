@@ -1,22 +1,23 @@
-using Google.Apis.Auth;
-using webapi.Infrastructure.Repositories;
 using System.Security.Cryptography;
 using System.Text;
+using Google.Apis.Auth;
 using webapi.Infrastructure.Data.Entities;
+using webapi.Infrastructure.Repositories;
 
-namespace webapi.Services;
+namespace webapi.Services.AuthService;
 
 public class AuthService(
     UserRepository userRepository,
     SessionRepository sessionRepository,
-    JwtService jwtService
+    JwtService jwtService,
+    GameService.GameService gameService
     )
 {
 
     public async Task<(string, string, DateTime)> Refresh(string refreshToken)
     {
         var session = await ValidateRefreshToken(refreshToken);
-        sessionRepository.Delete(session);
+        await sessionRepository.DeleteAsync(session);
         return await Auth(session.UserId, ++session.Version);
     }
 
@@ -26,19 +27,19 @@ public class AuthService(
         var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(refreshToken));
         var refreshTokenHash = Convert.ToBase64String(hashBytes);
         var session = await sessionRepository.GetByTokenHash(refreshTokenHash);
-        if (session == null) throw new Exception("Session not found");
-        return session;
+        return session ?? throw new Exception("Session not found");
     }
     
     public async Task<(string, string, DateTime)> AuthWithGoogle(string idToken)
     { 
-        GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature.ValidateAsync(idToken);
-        if (!payload.EmailVerified) throw new Exception();
+        var payload = await GoogleJsonWebSignature.ValidateAsync(idToken);
+        if (!payload.EmailVerified) throw new GoogleAuthException();
         
         var user = await userRepository.GetOrCreateByGoogleIdAsync(payload.Subject);
         var session = await sessionRepository.GetByUserIdAsync(user.Id);
-        if (session != null) sessionRepository.Delete(user.Id);
-        
+        if (session != null) await sessionRepository.DeleteAsync(user.Id);
+
+        _ = gameService.ActivePlayers.RemovePlayer(user.Id);
 
         var sessionVersion = session?.Version ?? 0;
         sessionVersion++;

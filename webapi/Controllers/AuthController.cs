@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using webapi.Services;
+using webapi.Services.AuthService;
 
 namespace webapi.Controllers;
 
@@ -8,11 +9,7 @@ namespace webapi.Controllers;
 public class AuthController(AuthService authService) : Controller
 {
     [HttpGet("accessibility")]
-    public IActionResult IsServerAccessible()
-    {
-        return Ok();
-    }
-       
+    public IActionResult IsServerAccessible() => Ok();
     
     [HttpGet("refresh")]
     public async Task<IActionResult> Refresh()
@@ -38,7 +35,7 @@ public class AuthController(AuthService authService) : Controller
     {
         try
         {
-            (string accessToken, string refreshToken, DateTime expires) =
+            var (accessToken, refreshToken, expires) =
                 await authService.AuthWithGoogle(idToken);
 
             return GetAuthenticatedResponse(accessToken, refreshToken, expires);

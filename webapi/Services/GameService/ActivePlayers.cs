@@ -1,12 +1,14 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 
-namespace webapi.Services;
+namespace webapi.Services.GameService;
 
 public delegate T PlayerProcessor<T>(IEnumerable<Player> players);
+
 public delegate void PlayerProcessor(IEnumerable<Player> players);
 
 public delegate void LockedWork();
+
 public delegate T LockedWork<T>();
 
 public class ActivePlayers
@@ -16,53 +18,43 @@ public class ActivePlayers
 
     public Player AddPlayer(WebSocket socket, int userId)
     {
-        Task? finishCompletion;
-        Player? player;
-        lock (_playerConsistency)
+        return WorkUnderLock(() =>
         {
-            player = GetByUserId(userId);
+            var player = GetByUserId(userId);
             if (player != null)
-                finishCompletion = player.ReplaceSocketAsync(socket);
+                _ = player.ReplaceSocketAsync(socket);
             else
             {
                 player = new Player(userId, socket);
                 if (!_players.TryAdd(player.Id, player))
-                    finishCompletion = player.Finish();
+                    _ = player.Finish();
             }
-        }
 
-        return player;
+            return player;
+        });
     }
 
-    public Task RemovePlayerLocked(int userId)
+    public ValueTask RemovePlayer(int userId, bool withLock = true)
     {
-        lock (_playerConsistency)
+        return withLock ? WorkUnderLock(Fn) : Fn();
+
+        ValueTask Fn()
         {
-            return RemovePlayerUnlocked(userId);
+            var res = _players.TryRemove(userId, out var player);
+            return res ? new ValueTask(player!.Finish()) : new ValueTask();
         }
-    }
-
-    public Task RemovePlayerUnlocked(int userId)
-    {
-        var res = _players.TryRemove(userId, out var player);
-        return res ? player!.Finish() : Task.CompletedTask;
     }
 
     public Player? GetByUserId(int userId)
     {
-        lock (_playerConsistency)
-        {
-            _players.TryGetValue(userId, out var player);
-            return player;
-        }
+        _players.TryGetValue(userId, out var player);
+        return player;
     }
 
 
     public IEnumerable<Player> GetAllPlayers()
     {
-        return _players
-            .ToArray()
-            .Select((entry) => entry.Value);
+        return _players.Select((entry) => entry.Value);
     }
 
     public void ProcessPlayers(PlayerProcessor processor)
@@ -73,6 +65,7 @@ public class ActivePlayers
             return true;
         });
     }
+
     public T ProcessPlayers<T>(PlayerProcessor<T> processor) =>
         WorkUnderLock(() => processor(GetAllPlayers()));
 
@@ -90,8 +83,6 @@ public class ActivePlayers
         lock (_playerConsistency)
             return work();
     }
-    
-    
 }
 
 public enum GameRole

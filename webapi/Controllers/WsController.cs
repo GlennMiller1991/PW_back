@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using webapi.Services;
+using webapi.Services.AuthService;
 using webapi.Services.GameService;
 
 namespace webapi.Controllers;

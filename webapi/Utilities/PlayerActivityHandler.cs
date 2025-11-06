@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using webapi.Extensions;
 using webapi.Infrastructure.Repositories;
-using webapi.Services;
+using webapi.Services.GameService;
 
 namespace webapi.Utilities;
 
 public class PlayerActivityRequirements : SessionVersionRequirements;
 
-public class PlayerActivityHandler<T>(SessionRepository sessionRepository, Services.GameService.GameService gameService) :
+public class PlayerActivityHandler<T>(SessionRepository sessionRepository, GameService gameService) :
     SessionVersionHandler<PlayerActivityRequirements>(sessionRepository) where T : PlayerActivityRequirements
 {
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context,

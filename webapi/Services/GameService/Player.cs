@@ -1,6 +1,6 @@
 using System.Net.WebSockets;
 
-namespace webapi.Services;
+namespace webapi.Services.GameService;
 
 public class Player
 {
@@ -8,9 +8,10 @@ public class Player
     public WebSocket Socket { get; private set; }
     public GameRole Role { get; private set; } = GameRole.Challenger;
 
+    public readonly Lock PlayerLock = new ();
+
     public Task UpgradeRole()
     {
-        if (Role == GameRole.Player) return Task.CompletedTask;
         Role = GameRole.Player;
         return Broadcast.SendStatusChangeMessage(Socket);
     }
@@ -21,8 +22,6 @@ public class Player
         Socket = socket;
         SetSocket(socket);
     }
-    public DateTime ConnectionBirthTime { get; private set; }
-
     public DateTime LastActionTime { get; set; } 
 
     public TaskCompletionSource Tcs { get; set; } = new();
@@ -41,6 +40,7 @@ public class Player
     {
         var finishCompletion = Finish();
         SetSocket(socket);
+        UpgradeRole();
         return finishCompletion;
     }
 
@@ -48,13 +48,16 @@ public class Player
     {
         Socket = socket;
         Tcs = new TaskCompletionSource();
-        ConnectionBirthTime = DateTime.Now;
-        LastActionTime = ConnectionBirthTime - TimeSpan.FromMinutes(2);
+        LastActionTime = DateTime.Now - TimeSpan.FromSeconds(1);
     }
 
-    public Task CloseSocket() => 
-        Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None)
-        .ContinueWith(_ => Socket.Dispose());
+    public Task CloseSocket()
+    {
+        var socket = Socket;
+        return socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None)
+            .ContinueWith(_ => socket.Dispose());
+    }
+       
     public static bool IsConnectionAlive(WebSocket socket) => socket.State == WebSocketState.Open;
 
     public static bool IsActive(Player player) => player.Role == GameRole.Player;

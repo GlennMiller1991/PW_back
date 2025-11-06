@@ -1,17 +1,10 @@
-namespace webapi.Services;
+namespace webapi.Services.GameService;
 
 public class ActivePlayersActualizer(ActivePlayers activePlayers)
 {
     private int _maxActiveQty = 10;
+    private readonly TimeSpan _afkTimeout = TimeSpan.FromMinutes(2);
     private Timer? _timer;
-
-    public Task OnAddNewPlayer(Player player, Player[] players)
-    {
-        if (players.Count(p => p.Role == GameRole.Player) < _maxActiveQty)
-            return player.UpgradeRole();
-
-        return Task.CompletedTask;
-    }
 
     private void PlayersActualizer(IEnumerable<Player> players)
     {
@@ -24,25 +17,24 @@ public class ActivePlayersActualizer(ActivePlayers activePlayers)
         var activeQty = active.Length;
 
         var nextCheckDelay = TimeSpan.Zero;
-        var twoMin = TimeSpan.FromMinutes(2);
         foreach (var player in active)
         {
             var dif = DateTime.Now - player.LastActionTime;
-            if (dif >= twoMin)
+            if (dif >= _afkTimeout)
             {
-                activePlayers.RemovePlayerUnlocked(player.Id);
+                activePlayers.RemovePlayer(player.Id, false);
                 activeQty--;
             }
             else
             {
-                nextCheckDelay = -dif;
+                nextCheckDelay = _afkTimeout - dif;
                 break;
-            };
+            }
         }
 
         var isFreeNow = _maxActiveQty - activeQty;
         if (isFreeNow > 0 && nextCheckDelay == TimeSpan.Zero && passive.Length > 0)
-            nextCheckDelay = twoMin;
+            nextCheckDelay = _afkTimeout;
 
         foreach (var player in passive[..Math.Min(isFreeNow, passive.Length)])
             player.UpgradeRole();

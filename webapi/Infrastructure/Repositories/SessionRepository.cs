@@ -31,17 +31,16 @@ public class SessionRepository(AppDbContext context)
         return s;
     }
 
-    public void Delete(int userId)
+    public ValueTask DeleteAsync(int userId)
     {
         var s = context.Sessions.FirstOrDefault(s => s.UserId == userId);
-        if (s == null) return;
-        Delete(s);
+        return s == null ? new ValueTask() : new ValueTask(DeleteAsync(s));
     }
 
-    public void Delete(Session session)
+    public Task DeleteAsync(Session session)
     {
         context.Sessions.Remove(session);
-        context.SaveChanges();
+        return context.SaveChangesAsync();
     }
     
     
