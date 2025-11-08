@@ -33,7 +33,7 @@ public class PixelRepository
         _bitmap[r + 2] = color.B;
     }
 
-    public (int, int) GetSizes() => (_width, _height);
+    public (int width, int height) GetSizes() => (_width, _height);
 
     public byte[] GetBitmap() => _bitmap;
 

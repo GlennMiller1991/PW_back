@@ -30,8 +30,8 @@ public class Player
 
     public Task Finish()
     {
-        Tcs.SetResult();
-        return CloseSocket();
+        return CloseSocket()
+            .ContinueWith(_ => Tcs.SetResult());
     }
 
     public bool IsConnectionAlive() => IsConnectionAlive(Socket);

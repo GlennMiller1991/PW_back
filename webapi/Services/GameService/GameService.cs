@@ -28,17 +28,27 @@ public class GameService
         _pixelRepository = pixelRepository;
         _actualizer = new(ActivePlayers);
 
-        SavedVersionedBitmap = pixelRepository.GetBitmapCopy();
+        SavedVersionedBitmap = GetBitmapCopy(0);
         SavedBitmapVersion = 0;
 
         _ = Init();
+    }
+
+    private byte[] GetBitmapCopy(int newVersion)
+    {
+        var sizes = _pixelRepository.GetSizes();
+        var bitmap = new byte[sizes.width * sizes.height * 3 + 4];
+        int[] intArr = [newVersion];
+        Buffer.BlockCopy(intArr, 0, bitmap, 0, 4);
+        _pixelRepository.GetBitmapCopy(bitmap, 4);
+        return bitmap;
     }
 
     private async Task Init()
     {
         await foreach (var queue in _paintingQueue.GetStream())
         {
-            try 
+            try
             {
                 var messages = new (int x, int y, Color color, int version)[queue.Count];
                 var i = 0;
@@ -53,14 +63,8 @@ public class GameService
                     .Select(p => p.Socket);
 
                 var newVersion = SavedBitmapVersion + i;
-                var copyTask = Task.Run(() =>
-                {
-                    var bitmap = new byte[SavedVersionedBitmap.Length + 4];
-                    int[] intArr = [newVersion];
-                    Buffer.BlockCopy(intArr, 0, bitmap, 0, 4);
-                    _pixelRepository.GetBitmapCopy(bitmap, 4);
-                    return bitmap;
-                });
+                var copyTask = Task.Run(() => GetBitmapCopy(newVersion));
+
                 var failedConnections = Broadcast.SendPixelSettingListMessage(messages, connections);
                 await Task.WhenAll(copyTask, failedConnections);
 
@@ -69,10 +73,11 @@ public class GameService
                     SavedVersionedBitmap = copyTask.Result;
                     SavedBitmapVersion += i;
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 Console.WriteLine("Bug");
             }
-            
         }
     }
 
