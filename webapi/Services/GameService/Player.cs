@@ -28,8 +28,11 @@ public class Player
 
     public Task Completion => Tcs.Task;
 
-    public Task Finish()
+    public Task Finish(bool notifyLogout = false)
     {
+        if (Convert.ToBoolean(notifyLogout))
+            Broadcast.SendLogoutMessage(Socket);
+        
         var tcs = Tcs;
         return CloseSocket()
             .ContinueWith(_ => tcs.SetResult());
@@ -39,7 +42,7 @@ public class Player
 
     public Task ReplaceSocketAsync(WebSocket socket)
     {
-        var finishCompletion = Finish();
+        var finishCompletion = Finish(true);
         SetSocket(socket);
         UpgradeRole();
         return finishCompletion;

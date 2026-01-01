@@ -9,7 +9,7 @@ public class GameService
 {
     private readonly DelayedQueue<PixelInfo> _paintingQueue = new(50);
     private readonly PixelRepository _pixelRepository;
-    private readonly TimeSpan _reloadTimeout = TimeSpan.FromMilliseconds(1000);
+    private readonly TimeSpan _reloadTimeout = TimeSpan.FromMilliseconds(100);
     public ActivePlayers ActivePlayers { get; } = new();
     private readonly ActivePlayersActualizer _actualizer;
 
@@ -37,11 +37,12 @@ public class GameService
     private byte[] GetBitmapCopy(int newVersion)
     {
         var sizes = _pixelRepository.GetSizes();
-        var bitmap = new byte[sizes.width * sizes.height * 3 + 4];
+        var versionInBytes = sizeof(int);
+        var bitmap = new byte[sizes.width * sizes.height * 3 + versionInBytes];
         int[] intArr = [newVersion];
-        Buffer.BlockCopy(intArr, 0, bitmap, 0, 4);
-        _pixelRepository.GetBitmapCopy(bitmap, 4);
-        return bitmap;
+        Buffer.BlockCopy(intArr, 0, bitmap, 0, versionInBytes);
+        bitmap = _pixelRepository.GetBitmapCopy(bitmap, 4);
+        return Broadcast.MakeBitmapSettingsMessage(bitmap);
     }
 
     private async Task Init()

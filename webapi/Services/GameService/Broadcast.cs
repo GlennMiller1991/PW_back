@@ -6,16 +6,32 @@ namespace webapi.Services.GameService;
 internal enum Room : byte
 {
     Game = 1,
+    App = 2,
 }
 
 internal enum GameMessageType : byte
 {
     StatusChange = 1,
     PixelSetting = 2,
+    BitmapSetting = 3,
+}
+
+internal enum AppMessageType : byte
+{
+    Logout = 1,
 }
 
 public abstract class Broadcast
 {
+    public static byte[] MakeBitmapSettingsMessage(byte[] bitmap)
+    {
+        var byteArray = new byte[bitmap.Length + 2];
+        byteArray[0] = (byte)Room.Game;
+        byteArray[1] = (byte)GameMessageType.BitmapSetting;
+        Buffer.BlockCopy(bitmap, 0, byteArray, 2, bitmap.Length);
+        return byteArray;
+    }
+    
     public static Task<List<WebSocket>> SendPixelSettingListMessage((int x, int y, Color color, int version)[] arr, IEnumerable<WebSocket> connections)
     {
         var intArray = new int[arr.Length * 6];
@@ -36,16 +52,16 @@ public abstract class Broadcast
         byteArray[1] = (byte)GameMessageType.PixelSetting;
         Buffer.BlockCopy(intArray, 0, byteArray, 2, byteArray.Length - 2);
 
-        return SendMessage(byteArray, connections);
+        return SendBroadcastMessage(byteArray, connections);
     }
 
     public static Task SendStatusChangeMessage(WebSocket socket)
     {
         var byteArray = new[] { (byte)Room.Game, (byte)GameMessageType.StatusChange };
-        return SendMessage(byteArray, [socket]);
+        return SendBroadcastMessage(byteArray, [socket]);
     }
 
-    public static async Task<List<WebSocket>> SendMessage(byte[] msg, IEnumerable<WebSocket> connections)
+    public static async Task<List<WebSocket>> SendBroadcastMessage(byte[] msg, IEnumerable<WebSocket> connections)
     {
         var tasks = new List<Task>();
         var abort = CancellationToken.None;
@@ -64,5 +80,11 @@ public abstract class Broadcast
 
         await Task.WhenAll(tasks);
         return failed;
+    }
+
+    public static Task SendLogoutMessage(WebSocket connection)
+    {
+        byte[] msg = [(byte)Room.App, (byte)AppMessageType.Logout];
+        return connection.SendAsync(msg, WebSocketMessageType.Binary, true, CancellationToken.None);
     }
 }

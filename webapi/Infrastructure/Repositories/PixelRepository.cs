@@ -26,7 +26,7 @@ public class PixelRepository
 
     public void SetPixel(PixelInfo pixelInfo)
     {
-        var r = pixelInfo.Y * _width * 3 + pixelInfo.X * 3;
+        var r = (pixelInfo.Y * _height + pixelInfo.X) * 3;
         var color = pixelInfo.Color;
         _bitmap[r] = color.R;
         _bitmap[r + 1] = color.G;
@@ -43,6 +43,6 @@ public class PixelRepository
         var src = _bitmap;
         Buffer.BlockCopy(_bitmap, 0, dst, dstOffset, src.Length);
 
-        return src;
+        return dst;
     }
 }
