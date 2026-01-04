@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using webapi.Extensions;
 using webapi.Services;
 using webapi.Services.AuthService;
 
@@ -10,7 +12,7 @@ public class AuthController(AuthService authService) : Controller
 {
     [HttpGet("accessibility")]
     public IActionResult IsServerAccessible() => Ok();
-    
+
     [HttpGet("refresh")]
     public async Task<IActionResult> Refresh()
     {
@@ -43,6 +45,21 @@ public class AuthController(AuthService authService) : Controller
         catch (Exception ex)
         {
             return BadRequest(ex);
+        }
+    }
+
+    [Authorize(Policy = "ValidSession")]
+    [HttpGet("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        try
+        {
+            await authService.Logout(User.GetUserId());
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest();
         }
     }
 

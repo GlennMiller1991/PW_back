@@ -15,6 +15,13 @@ public class UserRepository(AppDbContext context)
         await _context.SaveChangesAsync();
         return user;
     }
+    
+    
+
+    public Task<User?> GetByIdAsync(int userId)
+    {
+        return _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+    }
 
     public async Task<User> GetOrCreateByGoogleIdAsync(string googleId)
     {
@@ -27,5 +34,17 @@ public class UserRepository(AppDbContext context)
     public async Task<User?> GetByGoogleIdAsync(string googleId)
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.GoogleId == googleId);
+    }
+    
+    public ValueTask DeleteAsync(int userId)
+    {
+        var s = context.Users.FirstOrDefault(s => s.Id == userId);
+        return s == null ? new ValueTask() : new ValueTask(DeleteAsync(s));
+    }
+
+    public Task DeleteAsync(User user)
+    {
+        context.Users.Remove(user);
+        return context.SaveChangesAsync();
     }
 }
