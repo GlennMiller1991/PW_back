@@ -41,7 +41,10 @@ public class ActivePlayers
         ValueTask Fn()
         {
             var res = _players.TryRemove(userId, out var player);
-            return res ? new ValueTask(player!.Finish(true)) : new ValueTask();
+            if (!res)
+                throw new Exception();
+
+            return new ValueTask(player!.Finish(true));
         }
     }
 

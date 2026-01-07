@@ -10,14 +10,15 @@ namespace webapi.Controllers;
 [Route("/api/[controller]")]
 public class GameController(GameService gameService) : Controller
 {
+    [Authorize(Policy = "ValidPlayer")]
     [HttpGet("sizes")]
     public IActionResult GetSizes()
     {
         var (width, height) = gameService.GetSizes();
-        return Ok(new {width, height});
+        return Ok(new { width, height });
     }
-    
-    [Authorize(Policy = "ValidPlayer")]
+
+    [Authorize(Policy = "ActivePlayer")]
     [HttpPost("set")]
     public IActionResult SetPixel([FromBody] SetPixelModel payload)
     {
@@ -26,7 +27,8 @@ public class GameController(GameService gameService) : Controller
         gameService.SetPixel(player!, payload.Point[0], payload.Point[1], color);
         return Ok();
     }
-
+    
+    [Authorize(Policy = "ValidPlayer")]
     [HttpGet("bitmap")]
     public IActionResult GetBitmap()
     {

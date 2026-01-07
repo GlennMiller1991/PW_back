@@ -57,8 +57,11 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("ValidSession", policy =>
         policy.Requirements.Add(new SessionVersionRequirements()));
     
-    options.AddPolicy("ValidPlayer", policy => 
+    options.AddPolicy("ActivePlayer", policy => 
         policy.Requirements.Add(new PlayerActivityRequirements()));
+    
+    options.AddPolicy("ValidPlayer", policy => 
+        policy.Requirements.Add(new PlayerValidityRequirements()));
 });
 builder.Services.AddScoped<IAuthorizationHandler, SessionVersionHandler<SessionVersionRequirements>>();
 builder.Services.AddScoped<IAuthorizationHandler, PlayerActivityHandler<PlayerActivityRequirements>>();

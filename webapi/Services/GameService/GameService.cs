@@ -90,6 +90,13 @@ public class GameService
         return player;
     }
 
+    public async Task RemovePlayer(int userId)
+    {
+        await ActivePlayers.RemovePlayer(userId);
+
+        Task.Run(_actualizer.ActualizePlayers);
+    }
+
     public void SetPixel(Player player, int x, int y, Color color)
     {
         ValidatePixel(x, y);

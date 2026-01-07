@@ -33,7 +33,7 @@ public class AuthService(
     {
         await userRepository.DeleteAsync(userId);
         await sessionRepository.DeleteAsync(userId);
-        await gameService.ActivePlayers.RemovePlayer(userId);
+        await gameService.RemovePlayer(userId);
 
         return;
     }
@@ -47,7 +47,7 @@ public class AuthService(
         var session = await sessionRepository.GetByUserIdAsync(user.Id);
         if (session != null) await sessionRepository.DeleteAsync(user.Id);
 
-        _ = gameService.ActivePlayers.RemovePlayer(user.Id);
+        _ = gameService.RemovePlayer(user.Id);
 
         var sessionVersion = session?.Version ?? 0;
         sessionVersion++;

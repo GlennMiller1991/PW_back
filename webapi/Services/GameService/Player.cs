@@ -44,7 +44,9 @@ public class Player
     {
         var finishCompletion = Finish(true);
         SetSocket(socket);
-        UpgradeRole();
+        if (IsActive(this)) 
+            UpgradeRole();
+        
         return finishCompletion;
     }
 
