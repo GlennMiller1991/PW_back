@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using webapi.Services.AuthService;
-using webapi.Services.GameService;
+using webapi.Services.GameInfra;
 
 namespace webapi.Controllers;
 

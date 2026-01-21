@@ -1,11 +1,12 @@
-using webapi.Services.GameService;
+using System.Drawing;
+using webapi.Services.GameInfra;
 
 namespace webapi.Infrastructure.Repositories;
 
 public class PixelRepository
 {
-    private readonly int _width = 100;
-    private readonly int _height = 100;
+    private readonly int _width = 1000;
+    private readonly int _height = 1000;
     private byte[] _bitmap;
 
     public PixelRepository()
@@ -19,15 +20,20 @@ public class PixelRepository
         _bitmap = new byte[_width * _height * 3];
     }
 
-    private void ClearBitmap()
+    public void ClearBitmap(byte[]? with = null)
     {
-        Array.Clear(_bitmap);
+        if (with == null) Array.Clear(_bitmap);
+        else
+        {
+            if (with.Length == _width * _height * 3)
+                _bitmap = with;
+        }
     }
 
-    public void SetPixel(PixelInfo pixelInfo)
+    public void SetPixel(SetPixelCommand setPixelCommand)
     {
-        var r = (pixelInfo.Y * _height + pixelInfo.X) * 3;
-        var color = pixelInfo.Color;
+        var r = (setPixelCommand.Y * _height + setPixelCommand.X) * 3;
+        var color = setPixelCommand.Color;
         _bitmap[r] = color.R;
         _bitmap[r + 1] = color.G;
         _bitmap[r + 2] = color.B;
@@ -36,6 +42,13 @@ public class PixelRepository
     public (int width, int height) GetSizes() => (_width, _height);
 
     public byte[] GetBitmap() => _bitmap;
+
+    public Color GetColorAtPosition(int x, int y)
+    {
+        if (x < 0 || x >= _width || y < 0 || y >= _height) throw new Exception();
+        x = (y + x) * 3;
+        return Color.FromArgb(_bitmap[x], _bitmap[x + 1], _bitmap[x + 2]);
+    }
 
     public byte[] GetBitmapCopy(byte[]? dst = null, int dstOffset = 0)
     {

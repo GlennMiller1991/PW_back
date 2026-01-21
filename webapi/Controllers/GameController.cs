@@ -2,7 +2,7 @@ using System.Drawing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using webapi.Controllers.Models;
-using webapi.Services.GameService;
+using webapi.Services.GameInfra;
 
 namespace webapi.Controllers;
 

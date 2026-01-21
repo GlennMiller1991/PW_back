@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 
-namespace webapi.Services.GameService;
+namespace webapi.Services.GameInfra;
 
 public delegate T PlayerProcessor<T>(IEnumerable<Player> players);
 

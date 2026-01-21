@@ -1,7 +1,7 @@
 using System.Drawing;
 using System.Net.WebSockets;
 
-namespace webapi.Services.GameService;
+namespace webapi.Services.GameInfra;
 
 internal enum Room : byte
 {
@@ -14,6 +14,7 @@ internal enum GameMessageType : byte
     StatusChange = 1,
     PixelSetting = 2,
     BitmapSetting = 3,
+    ClearBitmap = 4,
 }
 
 internal enum AppMessageType : byte
@@ -51,6 +52,15 @@ public abstract class Broadcast
         byteArray[0] = (byte)Room.Game;
         byteArray[1] = (byte)GameMessageType.PixelSetting;
         Buffer.BlockCopy(intArray, 0, byteArray, 2, byteArray.Length - 2);
+
+        return SendBroadcastMessage(byteArray, connections);
+    }
+
+    public static Task<List<WebSocket>> SendClearBitmapMessage(IEnumerable<WebSocket> connections)
+    {
+        var byteArray = new byte[2];
+        byteArray[0] = (byte)Room.Game;
+        byteArray[1] = (byte)GameMessageType.ClearBitmap;
 
         return SendBroadcastMessage(byteArray, connections);
     }

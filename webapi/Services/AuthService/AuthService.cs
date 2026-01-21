@@ -10,7 +10,7 @@ public class AuthService(
     UserRepository userRepository,
     SessionRepository sessionRepository,
     JwtService jwtService,
-    GameService.GameService gameService
+    GameInfra.GameService gameService
 )
 {
     public async Task<(string, string, DateTime)> Refresh(string refreshToken)

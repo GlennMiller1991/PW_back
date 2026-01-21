@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using webapi.Controllers;
 using webapi.Infrastructure.Data;
 using webapi.Infrastructure.Repositories;
 using webapi.Services;
 using webapi.Services.AuthService;
-using webapi.Services.GameService;
+using webapi.Services.GameInfra;
 
 namespace webapi.Extensions;
 
@@ -31,7 +32,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<JwtService, JwtService>();
         services.AddSingleton<GameService, GameService>();
         services.AddScoped<AuthService, AuthService>();
+        services.AddSingleton<TelegramController, TelegramController>();
 
         return services;
     }
+    
+    
 }

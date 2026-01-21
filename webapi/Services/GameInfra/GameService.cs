@@ -3,11 +3,11 @@ using System.Net.WebSockets;
 using webapi.Infrastructure.Repositories;
 using webapi.Utilities;
 
-namespace webapi.Services.GameService;
+namespace webapi.Services.GameInfra;
 
 public class GameService
 {
-    private readonly DelayedQueue<PixelInfo> _paintingQueue = new(50);
+    private readonly DelayedQueue<BitmapCommand> _paintingQueue = new(50);
     private readonly PixelRepository _pixelRepository;
     private readonly TimeSpan _reloadTimeout = TimeSpan.FromMilliseconds(100);
     public ActivePlayers ActivePlayers { get; } = new();
@@ -53,10 +53,26 @@ public class GameService
             {
                 var messages = new (int x, int y, Color color, int version)[queue.Count];
                 var i = 0;
-                foreach (var task in queue)
+                foreach (var cmd in queue)
                 {
-                    _pixelRepository.SetPixel(task);
-                    messages[i++] = (task.X, task.Y, task.Color, SavedBitmapVersion + i);
+                    var type = cmd.GetType();
+                    if (type == typeof(SetPixelCommand))
+                    {
+                        var pixelInfo = (SetPixelCommand)cmd;
+                        _pixelRepository.SetPixel(pixelInfo);
+                        messages[i++] = (pixelInfo.X, pixelInfo.Y, pixelInfo.Color, SavedBitmapVersion + i);                        
+                    }
+
+                    if (type == typeof(ClearCommand))
+                    {
+                        _pixelRepository.ClearBitmap(((ClearCommand)cmd).Bitmap);
+                        Array.Clear(messages);
+                        var color = _pixelRepository.GetColorAtPosition(0, 0);
+
+                        messages[0] = (0, 0, color, SavedBitmapVersion + 2);
+                        i = 1;
+                        break;
+                    }
                 }
 
                 var connections = ActivePlayers
@@ -107,9 +123,14 @@ public class GameService
             player.LastActionTime = DateTime.Now;
         }
 
-        var paintingTask = new PixelInfo(x, y, color);
+        var paintingTask = new SetPixelCommand(x, y, color);
 
         _paintingQueue.Enqueue(paintingTask);
+    }
+
+    public void Clear(byte[]? with = null)
+    {
+        _paintingQueue.Enqueue(new ClearCommand(with));
     }
 
     public void ValidatePixel(int x, int y)

@@ -1,9 +1,9 @@
-namespace webapi.Services.GameService;
+namespace webapi.Services.GameInfra;
 
 public class ActivePlayersActualizer(ActivePlayers activePlayers)
 {
     private int _maxActiveQty = 2;
-    private readonly TimeSpan _afkTimeout = TimeSpan.FromMinutes(2);
+    private readonly TimeSpan _afkTimeout = TimeSpan.FromMinutes(20);
     private Timer? _timer;
 
     private void PlayersActualizer(IEnumerable<Player> players)

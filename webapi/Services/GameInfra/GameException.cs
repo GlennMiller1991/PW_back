@@ -1,3 +1,3 @@
-namespace webapi.Services.GameService;
+namespace webapi.Services.GameInfra;
 
 public class GameException : Exception;

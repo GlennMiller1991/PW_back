@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using webapi.Extensions;
 using webapi.Infrastructure.Repositories;
-using webapi.Services.GameService;
+using webapi.Services.GameInfra;
 
 namespace webapi.Utilities;
 

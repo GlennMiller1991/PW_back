@@ -1,6 +1,6 @@
 using System.Net.WebSockets;
 
-namespace webapi.Services.GameService;
+namespace webapi.Services.GameInfra;
 
 public class Player
 {
