@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using webapi.Controllers;
 using webapi.Infrastructure.Data;
 using webapi.Infrastructure.Repositories;
 using webapi.Services;
@@ -29,10 +28,16 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddBusinessLogic(this IServiceCollection services)
     {
-        services.AddSingleton<JwtService, JwtService>();
-        services.AddSingleton<GameService, GameService>();
-        services.AddScoped<AuthService, AuthService>();
-        services.AddSingleton<TelegramController, TelegramController>();
+        services.AddSingleton<JwtService>();
+        services.AddSingleton<GameService>();
+        services.AddSingleton<ImageMaker>();
+        services.AddSingleton<TelegramService>();
+        services.AddSingleton<BitmapBackupRestorationService>();
+
+        services.AddScoped<AuthService>();
+        
+        services.AddHostedService<BackgroundServiceOrchestrator>();
+        
 
         return services;
     }

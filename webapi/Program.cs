@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
-using webapi.Controllers;
 using webapi.Extensions;
 using webapi.Services;
 using webapi.Utilities;
@@ -76,8 +75,6 @@ using (var scope = app.Services.CreateScope())
 {
     var initializer = scope.ServiceProvider.GetService<DatabaseInitializer>();
     initializer?.InitializeAsync().GetAwaiter().GetResult();
-
-    scope.ServiceProvider.GetService<TelegramController>();
 }
 app.MapControllers();
 
